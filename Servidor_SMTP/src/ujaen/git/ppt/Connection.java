@@ -17,6 +17,7 @@ public class Connection implements Runnable, RFC5322 {
 	protected Socket mSocket;
 	protected int mEstado = S_HELO;;
 	private boolean mFin = false;
+	public String origen;
 
 	public Connection(Socket s) {
 		mSocket = s;
@@ -29,7 +30,6 @@ public class Connection implements Runnable, RFC5322 {
 
 		String inputData = null;
 		String outputData = "";
-		
 
 		if (mSocket != null) {
 			try {
@@ -40,33 +40,54 @@ public class Connection implements Runnable, RFC5322 {
 						new InputStreamReader(mSocket.getInputStream()));
 
 				// Envío del mensaje de bienvenida
-				String response = RFC5321.getReply(RFC5321.R_220) + SP + RFC5321.MSG_WELCOME
-						+ RFC5322.CRLF;
+				String response = RFC5321.getReply(RFC5321.R_220) + SP
+						+ RFC5321.MSG_WELCOME + RFC5322.CRLF;
 				output.write(response.getBytes());
 				output.flush();
 
-				while (!mFin && ((inputData = input.readLine()) != null)) {
-					
-					System.out.println("Servidor [Recibido]> " + inputData);
-				
-					
+				while (!mFin && inputData != "quit") {
+
 					// Todo análisis del comando recibido
-					SMTPMessage m = new SMTPMessage(inputData);
+					// SMTPMessage m = new SMTPMessage(inputData);
 
 					// TODO: Máquina de estados del protocolo
 					switch (mEstado) {
 					case S_HELO:
-						
+
+						mEstado = RFC5321.C_MAIL;
 						break;
-					default:
+					case RFC5321.C_MAIL:
+						inputData = input.readLine();
+						if (inputData.startsWith("MAIL FROM: ") || inputData.startsWith("mail from: ")) {
+							System.out.println("Servidor [Recibido]> "
+									+ inputData);
+							origen = inputData.substring(11);
+							outputData = RFC5321.getReply(RFC5321.R_220) + SP
+									+ origen + SP + "remitente" + CRLF;
+							output.write(outputData.getBytes());
+							output.flush();
+							mEstado = RFC5321.C_RCPT;
+						} else
+							output.writeUTF(RFC5321
+									.getError(RFC5321.E_500_SINTAXERROR)
+									+ SP
+									+ RFC5321
+											.getErrorMsg(RFC5321.E_500_SINTAXERROR)
+									+ CRLF);
+						break;
+					case RFC5321.C_RCPT:
+						break;
+
+					case RFC5321.C_DATA:
 						break;
 					}
 
 					// TODO montar la respuesta
 					// El servidor responde con lo recibido
-					outputData = RFC5321.getReply(RFC5321.R_220) + SP + inputData + CRLF;
-					output.write(outputData.getBytes());
-					output.flush();
+					// outputData = RFC5321.getReply(RFC5321.R_220) + SP +
+					// inputData + CRLF;
+					// output.write(outputData.getBytes());
+					// output.flush();
 
 				}
 				System.out.println("Servidor [Conexión finalizada]> "
