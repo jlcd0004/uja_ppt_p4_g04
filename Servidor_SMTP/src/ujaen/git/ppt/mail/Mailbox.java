@@ -70,17 +70,17 @@ public class Mailbox extends ArrayList<Mail> {
 	 * @param user
 	 * @return
 	 */
-	public boolean open(String key) {
-		File file = new File(mUser);
+	public boolean open(String muser) {
+		File file = new File(muser);
 		if (file.isDirectory()) {
-			if (checkKey(key)) {
+			//if (checkKey(key)) {
 
 				mOpenned = true;
 				getMessages();
-			}
+			//}
 
 		} else
-			mOpenned = true;
+			mOpenned = false;
 
 		return mOpenned;
 	}
