@@ -17,10 +17,10 @@ public class Connection implements Runnable, RFC5322 {
 	public static final int S_HELO = 0;
 
 	protected Socket mSocket;
-	protected int mEstado = S_HELO;;
+	protected int mEstado = S_HELO;
 	private boolean mFin = false;
-	public String origen, destino;
-
+	public String origen, destino,mens="";
+	boolean control;
 	public Connection(Socket s) {
 		mSocket = s;
 		mEstado = 0;
@@ -71,6 +71,7 @@ public class Connection implements Runnable, RFC5322 {
 									+ origen + SP + "remitente" + CRLF;
 							output.write(outputData.getBytes());
 							output.flush();
+							inputData=null;
 							mEstado = RFC5321.C_RCPT;
 						} else{
 							output.writeUTF(RFC5321
@@ -89,17 +90,18 @@ public class Connection implements Runnable, RFC5322 {
 						if (inputData.startsWith("RCPT TO: ") || inputData.startsWith("rcpt to: ")) {
 							System.out.println("Servidor [Recibido]> "
 									+ inputData);
-							destino = inputData.substring(11);
+							destino = inputData.substring(9);
 							outputData = RFC5321.getReply(RFC5321.R_220) + SP
 									+ destino + SP + "destinatario" + CRLF;
 							output.write(outputData.getBytes());
-							Mailbox a = new Mailbox(destino);
+							//Mailbox a = new Mailbox(destino);
 							
-							if(a.open(destino)==true){
-								output.writeBytes("exito");
-							}else output.writeBytes("nada");
+							//if(a.open(destino)==true){
+							//	output.writeBytes("exito");
+							//}else output.writeBytes("nada");
 							output.flush();
-							mEstado = RFC5321.C_RCPT;
+							inputData=null;
+							mEstado = RFC5321.C_DATA;
 						} else{
 							output.writeUTF(RFC5321
 									.getError(RFC5321.E_500_SINTAXERROR)
@@ -111,6 +113,36 @@ public class Connection implements Runnable, RFC5322 {
 						break;
 
 					case RFC5321.C_DATA:
+						
+						inputData = input.readLine();
+						if (inputData.startsWith("quit") || inputData.startsWith("QUIT")){
+							mFin=true;
+						}else{
+						if (inputData.equals("DATA") || inputData.equals("data")) {
+							System.out.println("Servidor [Recibido]> "
+									+ inputData);
+							
+							while(control=true){
+								inputData = input.readLine();
+								if(inputData!=null  ){
+									if(inputData!="."+CRLF){
+										break;
+										}else
+									mens.concat(inputData);
+								}
+								
+							
+							}
+							
+							
+						} else{
+							output.writeUTF(RFC5321
+									.getError(RFC5321.E_500_SINTAXERROR)
+									+ SP
+									+ RFC5321
+											.getErrorMsg(RFC5321.E_500_SINTAXERROR)
+									+ CRLF);}}
+						System.out.println("--> "+mens);
 						break;
 					}
 
