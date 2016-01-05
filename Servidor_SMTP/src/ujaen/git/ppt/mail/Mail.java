@@ -42,13 +42,12 @@ public class Mail implements RFC5322{
 		mIp="";
 	}
 	
-	public Mail(String from,String to,String host,String ip,String mail) {
+	public Mail(String from,String to,String mail) {
 		mMail=mail;
 		mSize=mMail.length();
-		mMailfrom=to;
+		mMailfrom=from;
 		mRcptto=to;
-		mHost=host;
-		mIp=ip;
+		
 	}
 
 	public String getMail() {

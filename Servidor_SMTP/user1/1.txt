@@ -1,10 +1,7 @@
-subject: hola
-to: user1
-from: user2
+SUBJECT: asunto prueba
+TO: user1
+FROM: uno
 
-Correo de prueba
-Este es un correo
-de prueba
+
 prueba
-más pruebas
-
+correo de prueba
